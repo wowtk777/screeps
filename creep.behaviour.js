@@ -32,11 +32,11 @@ const deserializeTargetRoomPosition = function (target) {
     return null
 }
 
-const selectSource = function (creep, roomDescription) {
+const selectSource = function (creep, roomDescription, targetExtractor) {
     // console.log('roomDescription', JSON.stringify(roomDescription))
-    if (creep.memory.target && creep.memory.target.id && (creep.memory.target.id in roomDescription.sources)) {
-        let target = creep.memory.target
-        return Game.getObjectById(target.id)
+    const creepTarget = targetExtractor(creep)
+    if (creepTarget && creepTarget.id && creepTarget.ttl > 0 && (creepTarget.id in roomDescription.sources)) {
+        return { source: Game.getObjectById(creepTarget.id), cached: true }
     }
 
     const wrongStructureIds = new Set()
@@ -50,45 +50,47 @@ const selectSource = function (creep, roomDescription) {
 
         if (!nearestSource) {
             console.log("No source for creep", creep.name)
-            return null
+            return { source: null }
         }
 
-        let pretendentsCount = 0
-        for (let creepName in Game.creeps) {
-            const creepMemory = Game.creeps[creepName].memory
-            if (creepMemory.target && creepMemory.target.id == nearestSource.id) {
-                pretendentsCount++
-            }
-        }
+        const pretendentsCount = Object.values(Game.creeps).filter(function (creep) {
+            const creepTarget = targetExtractor(creep)
+            return creepTarget && creepTarget.id == nearestSource.id
+        }).lenght
 
         if (pretendentsCount >= roomDescription.sources[nearestSource.id].countOfEntrances) {
             wrongStructureIds.add(nearestSource.id)
         } else {
-            return nearestSource
+            return { source: nearestSource, cached: false }
         }
     }
 }
 
 module.exports = {
     harvest: function (creep, callback, roomDescription) {
-        var source = selectSource(creep, roomDescription)
+        const targetFileld = 'harvestTarget'
+        const targetExtractor = function (creep) {
+            return creep.memory[targetFileld]
+        }
+        const sourceInfo = selectSource(creep, roomDescription, targetExtractor)
+        const source = sourceInfo.source
 
-        const target = creep.memory['target']
-        if (target && target.id == source.id && target.ttl) {
+        const target = targetExtractor(creep)
+        if (sourceInfo.cached) {
             target.ttl--
         } else {
-            creep.memory['target'] = serializeTarget(source, 5)
+            creep.memory[targetFileld] = serializeTarget(source, 5)
         }
 
-
         if (creep.store.getFreeCapacity() <= 0) {
+            delete creep.memory[targetFileld]
             callback(creep)
             return
         }
         if (source) {
             if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
                 if (ERR_NO_PATH == creep.moveTo(source, { visualizePathStyle: { stroke: '#f80' } })) {
-                    delete creep.memory['target']
+                    delete creep.memory[targetFileld]
                     creep.say("No path")
                 }
             }
@@ -100,10 +102,6 @@ module.exports = {
         if (creep.store.getUsedCapacity() <= 0) {
             callback(creep)
             return
-        }
-
-        if (creep.memory.target) {
-            delete creep.memory.target
         }
 
         var structure = creep.room.controller

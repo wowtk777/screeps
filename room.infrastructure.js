@@ -7,10 +7,10 @@
  * mod.thing == 'a thing'; // true
  */
 
-var roads = require('room.infrastructure.roads')
-var utilsPos = require('utils.pos')
+const roads = require('room.infrastructure.roads')
+const utilsPos = require('utils.pos')
 
-var codeStructures = {
+const codeStructures = {
     "$": STRUCTURE_SPAWN,
     "E": STRUCTURE_EXTENSION,
     "R": STRUCTURE_ROAD,
@@ -34,17 +34,17 @@ var codeStructures = {
     "i": STRUCTURE_INVADER_CORE,
 }
 
-var structureCodes = {}
+const structureCodes = {}
 
 for (let k in codeStructures) {
     structureCodes[codeStructures[k]] = k
 }
 
-var structureToPackedPos = function (structure) {
+const structureToPackedPos = function (structure) {
     return utilsPos.packXY(structure.pos).concat(structureCodes[structure.structureType])
 }
 
-var placeStructure = function (x, y, type, room) {
+const placeStructure = function (x, y, type, room) {
     // console.log("Try to place structure", x, y, type, room.name)
     if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length != 0) {
         return true
@@ -61,7 +61,7 @@ var placeStructure = function (x, y, type, room) {
     return true
 }
 
-var completeInfrastructure = function (infrastructureLayer, room) {
+const completeInfrastructure = function (infrastructureLayer, room) {
     return !infrastructureLayer.map(function (item) {
         let pos = utilsPos.unpackXY(item)
         let structureType = codeStructures[item[2]]
@@ -69,13 +69,13 @@ var completeInfrastructure = function (infrastructureLayer, room) {
     }).reduce(function (a, b) { return a || b }, false)
 }
 
-var maintainedNeutralStructureTypes = new Set([STRUCTURE_ROAD, STRUCTURE_WALL])
+const maintainedNeutralStructureTypes = new Set([STRUCTURE_ROAD, STRUCTURE_WALL])
 
-var maintainedStructureFilter = function (structure) {
+const maintainedStructureFilter = function (structure) {
     return structure.my || maintainedNeutralStructureTypes.has(structure.structureType)
 }
 
-var createSnapshot = function (room) {
+const createSnapshot = function (room) {
     let findAndPack = function (find) {
         return room.find(find, { filter: maintainedStructureFilter }).map(structureToPackedPos)
     }
