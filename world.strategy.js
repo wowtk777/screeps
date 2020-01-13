@@ -23,14 +23,9 @@ var calculateRequiredUpgraders = function (controllerLevel) {
 }
 
 var calculateRequiredBuilders = function (room) {
-    var count = room.find(FIND_MY_CONSTRUCTION_SITES).length +
-        room.find(FIND_MY_STRUCTURES, { filter: function (s) { return s.hitsMax && (s.hitsMax - s.hits != 0) } }).length
+    var count = room.find(FIND_MY_CONSTRUCTION_SITES).length + room.find(FIND_STRUCTURES, { filter: roomInfrastructure.maintainedStructureFilter }).length
     if (count > 1) {
-        return 3
-    }
-
-    if (count == 1) {
-        return 1
+        return Math.max(2, count / 20) + 0.5
     }
     return 0
 }

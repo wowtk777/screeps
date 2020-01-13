@@ -18,12 +18,12 @@ const cleenupMemory = function () {
     }
 
     for (let roomName in Memory.rooms) {
-        if (!(roomName in Game.rooms)) {
-            delete Memory.rooms[roomName]
-        } else {
+        if (roomName in Game.rooms) {
             if ('preferences' in Memory.rooms[roomName]) {
                 delete Memory.rooms[roomName]['preferences']
             }
+        } else {
+            delete Memory.rooms[roomName]
         }
     }
 
