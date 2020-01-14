@@ -26,20 +26,16 @@ module.exports = {
                     delete creep.memory.target
                 }
 
-                let structures = creep.room.find(FIND_MY_STRUCTURES)
-                let structureFound = false
-                for (var structureIndex in structures) {
-                    let structure = structures[structureIndex]
-                    if (structure.store != undefined && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
-                        if (creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                            creep.moveTo(structure, { visualizePathStyle: { stroke: '#fff' } });
-                        }
-                        structureFound = true
-                        break
-                    }
+                const structureFilter = function (structure) {
+                    return structure.store && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                 }
+                const structure = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, { filter: structureFilter })
 
-                if (!structureFound) {
+                if (structure) {
+                    if (creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(structure, { visualizePathStyle: { stroke: '#fff' } });
+                    }
+                } else {
                     creepBehaviour.upgrade(creep, doHarvest, roomDescription)
                 }
                 break
